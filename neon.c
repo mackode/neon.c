@@ -25,8 +25,8 @@ static inline double getTimeInSec(void) {
   return(dtime);
 }
 
-maxret_t findMax(int N, float *xval) {
-maxret_t findMaxVec(int N, float *xval) {
+maxret_t findMax(int N, float *xval);
+maxret_t findMaxVec(int N, float *xval);
 
 int main(int argc, char *argv[]) {
   int n;
@@ -106,7 +106,7 @@ maxret_t findMax(int N, float *xval) {
   return(mret);
 }
 
-maxret_t finMaxVec(int N, float *xval) {
+maxret_t findMaxVec(int N, float *xval) {
   maxret_t mret = {-1, -1.0e38};
   return(mret);
 }
