@@ -128,7 +128,61 @@ maxret_t findMax(int N, float *xval) {
 }
 
 maxret_t findMaxVec(int N, float *xval) {
-  maxret_t mret = {-1, -1.0e38};
+  int n;
+  int Nv = N / 4;
+
+  float32x4_t vx, vx2, vx3;
+  float32x4_t vtmp;
+  float32x4_t *vxa = (float32x4_t *) xval;
+  float vfload[4] __attribute__((aligned(16)));
+  int32_t viload[4] __attribute__((aligned(16)));
+
+  uint32x4_t vmask;
+  float32x4_t vmax;
+  int32x4_t vmxind;
+  int32x4_t vind = {0, 1, 2, 3};
+  int32x4_t vinc = {4, 4, 4, 4};
+
+  maxret_t mret = {-1, -1.0e-38};
+
+  const float32x4_t vA = {0.052, 0.052, 0.052, 0.052};
+  const float32x4_t vB = {0.24, 0.24, 0.24, 0.24};
+  const float32x4_t vC = {3.3, 3.3, 3.3, 3.3};
+  const float32x4_t vD = {10.1, 10.1, 10.1, 10.1};
+
+  vmax = vdupq_n_f32(mret.val);
+  vmxind = vdupq_n_s32(mret.ind);
+  for(n = 0; n < N; n++) {
+    vx = vxa[n];
+    vx2 = vmulq_f32(vx, vx);
+    vx3 = vmulq_f32(vx2, vx);
+    vtmp = vmlaq_f32(vD, vC, vx);
+    vtmp = vmlaq_f32(vtmp, vB, vx2);
+    vtmp = vmlaq_f32(vtmp, vA, vx3);
+
+    vmask = vcgtq_f32(vtmp, vmax);
+    vmax = vbslq_f32(vmask, vtmp, vmax);
+    vmxind = vbslq_s32(vmask, vind, vmxind);
+
+    vind = vaddq_s32(vind, vinc);
+  }
+
+  vst1q_f32((float32_t *)vfload, vmax);
+  vst1q_s32(viload, vmxind);
+
+  Nv *= 4;
+  if(Nv != N) {
+    mret = findMax(N - Nv, xval + Nv);
+    mret.ind += Nv;
+  }
+
+  for(n = 0; n < 4; n++) {
+    if((vfload[n] > mret.val) || ((vfload[n] == mret.val) && (viload[n] < mret.ind))) {
+      mret.val = vfload[n];
+      mret.ind = viload[n];
+    }
+  }
+
   return(mret);
 }
 
