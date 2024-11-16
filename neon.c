@@ -26,7 +26,7 @@ static inline double getTimeInSec(void) {
 }
 
 maxret_t findMax(int N, float *xval) {
-maxret_t finMaxVec(int N, float *xval) {
+maxret_t findMaxVec(int N, float *xval) {
 
 int main(int argc, char *argv[]) {
   int n;
@@ -44,10 +44,60 @@ int main(int argc, char *argv[]) {
       printf("neon [-h] [-n #samples]\n");
       return(0);
     } else if(strcmp(argv[n], "-n") == 0) {
-
+      if(++n >= argc) {
+        printf("-n option requires integer argument\n");
+        return(-1);
+      } else {
+        N = atoi(argv[n]);
+      }
+    } else {
+      printf("Unknown argument [%s] ignoring\n", argv[n]);
     }
   }
 
+  if(N < 0) N = 0;
+  if(N > Nlimit) N = Nlimit;
+
+  msize = ((size_t) N) * sizeof(float);
+  N = (int)msize / sizeof(float);
+  xval = (float *)malloc(msize);
+  if(xval == NULL) {
+    fprintf(stderr, "Memory allocation error: %s:%d\n", __FILE__, __LINE__);
+    return(-1);
+  }
+
+  srand((unsigned int) time((time_t *)NULL));
+  for(n = 0; n < N; n++) {
+    xval[n] = ((float) (rand() % 200000)) * 5.0e-5;
+  }
+
+  time1 = getTimeInSec();
+  for(n = 0; n < TIME_ITER; n++) {
+    mret = findMax(N, xval);
+  }
+  duration = getTimeInSec() - time1;
+  rate = ((double) TIME_ITER) * ((double) N) * 12.0e-9;
+  rate /= duration;
+  membw = ((double) TIME_ITER) * ((double) N) * 4.0e-6;
+  membw /= duration;
+  
+  printf("Scalar: index = %d, max = %f, duration = %f msec\n", mret.ind, mret.val, 1e3 * duration / ((double) TIME_ITER));
+  printf("    rate = %f GOps/s, memory = %f MB/s\n", rate, membw);
+
+  time1 = getTimeInSec();
+  for(n = 0; n < TIME_ITER; n++) {
+    mret = findMaxVec(N, xval);
+  }
+  duration = getTimeInSec() - time1;
+  rate = ((double) TIME_ITER) * ((double) N) * 12.0e-9;
+  rate /= duration;
+  membw = ((double) TIME_ITER) * ((double) N) * 4.0e-6;
+  membw /= duration;
+
+  printf("Neon: index = %d, max = %f, duration = %f msec\n", mret.ind, mret.val, 1e3 * duration / ((double) TIME_ITER));
+  printf("    rate = %f GOps/s, memory = %f MB/s\n", rate, membw);
+
+  if(xval != NULL) free((void *) xval);
   return(0);
 }
 
