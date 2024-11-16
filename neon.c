@@ -102,7 +102,28 @@ int main(int argc, char *argv[]) {
 }
 
 maxret_t findMax(int N, float *xval) {
+  int n;
+  float x, x2, x3;
+  float val;
   maxret_t mret = {-1, -1.0e38};
+
+  const float A = 0.052;
+  const float B = 0.24;
+  const float C = 3.3;
+  const float D = 10.1;
+
+  for(n = 0; n < N; n++) {
+    x = xval[n];
+    x2 = x * x;
+    x3 = x2 * x;
+    val = A * x3 + B * x2 + C * x + D;
+
+    if(val > mret.val) {
+      mret.val = val;
+      mret.ind = n;
+    }
+  }
+
   return(mret);
 }
 
